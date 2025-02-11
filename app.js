@@ -24,6 +24,7 @@ const db = new sqlite3.Database('todo.db', (err) => {
   console.log('Connected to the todo database.');
 });
 
+// Create the tasks table if it doesn't exist
 db.run(`
   CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
       return;
     }
 
+      // Create a list of tasks
       let taskList = tasks.map(task => `
         <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}">
           <span>${task.task}</span>
@@ -103,7 +105,7 @@ app.post('/delete/:id', (req, res) => {
    res.json({ success: true, id: taskId });  });
 });
 
-
+// Start the server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server started on http://localhost:${port}`);
 });

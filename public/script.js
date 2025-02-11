@@ -26,8 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-console.log(taskId);
-          document.getElementById(`task-${taskId}`).querySelector('.complete-task').remove();
+            document.getElementById(`task-${taskId}`).querySelector('.complete-task').remove();
           }
         })
         .catch(error => console.error("Error completing task:", error));
