@@ -5,11 +5,14 @@ const port = 3000;
 const path = require('path');
 const bodyParser = require('body-parser');
 
-// Serve static files (CSS)
+// Serve static files (CSS, JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Parse JSON bodies (as sent by API clients)
+app.use(express.json());
 
 // Create and connect to sqlite database
 const db = new sqlite3.Database('todo.db', (err) => {
@@ -36,11 +39,13 @@ app.get('/', (req, res) => {
       return;
     }
 
-       let taskList = tasks.map(task => `
-      <li>
-        ${task.completed ? `<s>${task.task}</s>` : task.task} 
-        <a href="/complete/${task.id}">✅</a> 
-        <a href="/delete/${task.id}">❌</a>
+      let taskList = tasks.map(task => `
+        <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}">
+          <span>${task.task}</span>
+          <div class="task-actions">
+            ${!task.completed ? `<a href="#" class="complete-task" data-id="${task.id}">✅</a>` : ''}
+          <a href="#" class="delete-task" data-id="${task.id}">❌</a>   
+        </div>
       </li>
     `).join('');
 
@@ -53,23 +58,20 @@ app.get('/', (req, res) => {
           <h1>📝 My To-Do List</h1>
           <form action="/add" method="POST">
             <input type="text" name="task" placeholder="New task" required />
-            <button type="submit">➕ Add Task</button>
+            <button type="submit">Add Task</button>
           </form>
           <ul>${taskList}</ul>
+          <script src="/script.js"></script>
         </body>
       </html>
     `);
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
 // Add a new task
 app.post('/add', (req, res) => {
   const task = req.body.task;
-  db.run('INSERT INTO tasks (task) VALUES (?)', task, (err) => {
+  db.run('INSERT INTO tasks (task, completed) VALUES (?, 0)', task, (err) => {
     if (err) {
       console.error('Could not insert task:', err.message);
     }
@@ -78,38 +80,30 @@ app.post('/add', (req, res) => {
 });
 
 // Mark a task as completed
-app.get('/complete/:id', (req, res) => {
+app.post('/complete/:id', (req, res) => {
   const taskId = req.params.id;
-  db.run('UPDATE tasks SET completed = 1 WHERE id = ?', taskId, (err) => {
+  db.run('UPDATE tasks SET completed = 1 WHERE id = ?', taskId, function(err) {
     if (err) {
       console.error('Could not mark task as completed:', err.message);
+      return res.status(500).json({ success: false, message: "Error completing task." });
     }
-    res.redirect('/');
+    res.json({ success: true, taskId: taskId });
   });
 });
 
 // Delete a task
-app.get('/delete/:id', (req, res) => {
+app.post('/delete/:id', (req, res) => {
   const taskId = req.params.id;
   db.run('DELETE FROM tasks WHERE id = ?', taskId, (err) => {
     if (err) {
       console.error('Could not delete task:', err.message);
+      return res.status(500).json({ success: false, message: "Error deleting task." });
     }
-    res.redirect('/');
-  });
+
+   res.json({ success: true, id: taskId });  });
 });
 
-app.get('/greet', (req, res) => {
-  const name = req.query.name || 'stranger';
 
-  db.run('INSERT INTO tasks (task) VALUES (?)', name, (err) => {
-    if (err) {
-      console.error('Could not insert task:', err.message);
-      return;
-    }
-
-    console.log('Task inserted successfully');
-  });
-
-  res.send(`<h2>Hello, ${name}!</h2>`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
