@@ -1,9 +1,13 @@
 const express = require('express');
 const app = express();
 const port = 3000;
+const path = require('path');
+
+// Serve static files (CSS)
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.send('Hello, welcome to my Node.js app!');
+  res.send('Hello, welcome to my TODO list app!');
 });
 
 app.listen(port, () => {
@@ -12,10 +16,17 @@ app.listen(port, () => {
 
 app.get('/form', (req, res) => {
   res.send(`
-    <form action="/greet" method="get">
-      <input type="text" name="name" placeholder="Enter your name" />
-      <button type="submit">Greet Me</button>
-    </form>
+    <html>
+      <head>
+        <link rel="stylesheet" href="/style.css" />
+      </head>
+      <body>
+        <form action="/greet" method="get">
+          <input type="text" name="name" placeholder="Enter your name" />
+          <button type="submit">Greet Me</button>
+        </form>
+      </body>
+    </html>
   `);
 });
 
